@@ -22,6 +22,23 @@ def main(tau, train_path, eval_path):
     # Plot validation predictions on top of training set
     # No need to save predictions
     # Plot data
+    model = LocallyWeightedLinearRegression(tau=tau)
+    model.fit(x_train, y_train)
+
+    x_eval, y_eval = util.load_dataset(eval_path, add_intercept=True)
+    y_predict = model.predict(x_eval)
+
+    mse = np.mean((y_eval - y_predict) ** 2)
+
+    plt.figure()
+    plt.plot(x_train[:, 1], y_train, 'bx', label='Training Set')
+    plt.plot(x_eval[:, 1], y_predict, 'ro', label='Validation Predictions')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend()
+    plt.savefig(f'output/p05b_plot_tau_{tau}.pdf')
+
+
     # *** END CODE HERE ***
 
 
@@ -41,10 +58,10 @@ class LocallyWeightedLinearRegression(LinearModel):
         self.y = None
 
     def fit(self, x, y):
-        """Fit LWR by saving the training set.
-
-        """
+        """Fit LWR by saving the training set."""
         # *** START CODE HERE ***
+        self.x = x
+        self.y = y
         # *** END CODE HERE ***
 
     def predict(self, x):
@@ -57,4 +74,13 @@ class LocallyWeightedLinearRegression(LinearModel):
             Outputs of shape (m,).
         """
         # *** START CODE HERE ***
+        m_eval = x.shape[0]
+        y_pred = np.zeros(m_eval)
+        
+        for i in range(m_eval):
+            W = np.diag(np.exp(-np.linalg.norm(self.x - x[i], axis=1)**2 / (2 * self.tau**2)))
+            theta = np.linalg.inv(self.x.T @ W @ self.x) @ self.x.T @ W @ self.y
+            y_pred[i] = theta.T @ x[i]
+            
+        return y_pred
         # *** END CODE HERE ***

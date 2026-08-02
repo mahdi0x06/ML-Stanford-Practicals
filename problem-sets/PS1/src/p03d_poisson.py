@@ -15,12 +15,16 @@ def main(lr, train_path, eval_path, pred_path):
     """
     # Load training set
     x_train, y_train = util.load_dataset(train_path, add_intercept=True)
-    # The line below is the original one from Stanford. It does not include the intercept, but this should be added.
-    # x_train, y_train = util.load_dataset(train_path, add_intercept=False)
 
     # *** START CODE HERE ***
     # Fit a Poisson Regression model
     # Run on the validation set, and use np.savetxt to save outputs to pred_path
+    model = PoissonRegression(step_size=lr)
+    model.fit(x_train, y_train)
+
+    x_test, y_test = util.load_dataset(eval_path, add_intercept=True)
+    predict = model.predict(x_test)
+    np.savetxt(pred_path, predict)
     # *** END CODE HERE ***
 
 
@@ -41,6 +45,15 @@ class PoissonRegression(LinearModel):
             y: Training example labels. Shape (m,).
         """
         # *** START CODE HERE ***
+        if self.theta is None:
+            self.theta = np.zeros(x.shape[1])
+        for _ in range(self.max_iter):
+            delta = x.T @ (y - np.exp(x @ self.theta)) / x.shape[0]
+            new_theta = self.theta + self.step_size * delta
+            if(np.linalg.norm(new_theta - self.theta, ord=1) < self.eps):
+                self.theta = new_theta
+                break
+            self.theta = new_theta
         # *** END CODE HERE ***
 
     def predict(self, x):
@@ -53,4 +66,5 @@ class PoissonRegression(LinearModel):
             Floating-point prediction for each input, shape (m,).
         """
         # *** START CODE HERE ***
+        return np.exp(x @ self.theta)
         # *** END CODE HERE ***

@@ -18,7 +18,7 @@ def main(train_path, eval_path, pred_path):
     #creating an instance
     model = LogisticRegression()
     model.fit(x_train, y_train)
-
+    
     #loading the evaluation dataset
     x_eval, y_eval = util.load_dataset(eval_path, add_intercept=True)
     pred = model.predict(x_eval)
