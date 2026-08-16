@@ -6,6 +6,13 @@ import numpy as np
 import util
 
 
+def calc_total(state, kernel, x_i):
+    total = 0
+    for j in range(len(state['x'])):
+        total = total + state['beta'][j] * kernel(x_i, state['x'][j])
+
+    return total
+
 def initial_state():
     """Return the initial state for the perceptron.
 
@@ -16,6 +23,8 @@ def initial_state():
     """
 
     # *** START CODE HERE ***
+    x, beta = [], []
+    return {'x': x, 'beta': beta}
     # *** END CODE HERE ***
 
 
@@ -33,6 +42,8 @@ def predict(state, kernel, x_i):
         Returns the prediction (i.e 0 or 1)
     """
     # *** START CODE HERE ***
+    total = calc_total(state, kernel, x_i)
+    return sign(total)
     # *** END CODE HERE ***
 
 
@@ -47,6 +58,13 @@ def update_state(state, kernel, learning_rate, x_i, y_i):
         y_i: A 0 or 1 indicating the label for a single instance
     """
     # *** START CODE HERE ***
+    total = calc_total(state, kernel, x_i)
+
+    hypothesis = sign(total)
+    beta = learning_rate * (y_i - hypothesis)
+    if(beta != 0):
+        state['beta'].append(beta)
+        state['x'].append(x_i)
     # *** END CODE HERE ***
 
 
