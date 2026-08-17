@@ -21,6 +21,7 @@ def get_words(message):
     """
 
     # *** START CODE HERE ***
+    return message.lower().split()
     # *** END CODE HERE ***
 
 
@@ -39,8 +40,21 @@ def create_dictionary(messages):
     Returns:
         A python dict mapping words to integers.
     """
-
+    words_dict = {}
+    words_count = {}
     # *** START CODE HERE ***
+    for i in range(len(messages)):
+        words = set(get_words(messages[i]))
+        for word in words:
+            words_count[word] = words_count.get(word, 0) + 1
+
+    ind = 0
+    for word, rep in words_count.items():
+        if(rep >= 5):
+            words_dict[word] = ind
+            ind += 1
+            
+    return words_dict
     # *** END CODE HERE ***
 
 
@@ -62,6 +76,18 @@ def transform_text(messages, word_dictionary):
         A numpy array marking the words present in each message.
     """
     # *** START CODE HERE ***
+    words_arr = np.zeros((len(messages), len(word_dictionary)))
+
+    for i, message in enumerate(messages):
+        words = get_words(message)
+        for word in words:
+            if(word in word_dictionary):
+                j = word_dictionary[word]
+                words_arr[i][j] += 1
+
+    return words_arr
+
+
     # *** END CODE HERE ***
 
 
@@ -82,6 +108,29 @@ def fit_naive_bayes_model(matrix, labels):
     """
 
     # *** START CODE HERE ***
+    phi_y = np.mean(labels)
+
+    spam_matrix = matrix[labels == 1]
+    spam_word_count = np.sum(spam_matrix, axis=0)
+    total_spam_words = np.sum(spam_word_count)
+    total_spam_words += len(spam_word_count)
+    phi_spam = []
+    for i in range(len(spam_word_count)):
+        phi_spam.append((spam_word_count[i] + 1) / total_spam_words)
+
+    ham_matrix = matrix[labels == 0]
+    ham_word_count = np.sum(ham_matrix, axis=0)
+    total_ham_words = np.sum(ham_word_count)
+    total_ham_words += len(ham_word_count)
+    phi_ham = []
+    for i in range(len(ham_word_count)):
+        phi_ham.append((ham_word_count[i] + 1) / total_ham_words)
+
+    return {
+    'phi_y': phi_y,
+    'phi_spam': np.array(phi_spam),
+    'phi_ham': np.array(phi_ham)
+    }
     # *** END CODE HERE ***
 
 
@@ -98,6 +147,25 @@ def predict_from_naive_bayes_model(model, matrix):
     Returns: A numpy array containg the predictions from the model
     """
     # *** START CODE HERE ***
+    phi_y = model['phi_y']
+    phi_spam = model['phi_spam']
+    phi_ham = model['phi_ham']
+    
+    predictions = []
+    
+    for i in range(matrix.shape[0]):
+        message = matrix[i]
+    
+        spam_prob = np.log(phi_y) + np.sum(message * np.log(phi_spam))
+        ham_prob = np.log(1 - phi_y) + np.sum(message * np.log(phi_ham))
+    
+        if spam_prob > ham_prob:
+            predictions.append(1)
+        else:
+            predictions.append(0)
+    
+    return np.array(predictions)
+
     # *** END CODE HERE ***
 
 
@@ -114,6 +182,21 @@ def get_top_five_naive_bayes_words(model, dictionary):
     Returns: The top five most indicative words in sorted order with the most indicative first
     """
     # *** START CODE HERE ***
+    phi_spam = model['phi_spam']
+    phi_ham = model['phi_ham']
+
+    indicative_dict = {}
+
+    for word, ind in dictionary.items():
+        indicative_dict[word] = np.log(phi_spam[ind] / phi_ham[ind])
+
+    sorted_words = sorted(
+    indicative_dict,
+    key=indicative_dict.get,
+    reverse=True
+    )
+
+    return sorted_words[:5]
     # *** END CODE HERE ***
 
 
@@ -134,6 +217,18 @@ def compute_best_svm_radius(train_matrix, train_labels, val_matrix, val_labels, 
         The best radius which maximizes SVM accuracy.
     """
     # *** START CODE HERE ***
+    best_raduis = 0
+    best_acc = -1
+    for radius in radius_to_consider:
+        pred = svm.train_and_predict_svm(train_matrix, train_labels, val_matrix, radius)
+        acc = np.mean(pred == val_labels)
+
+        if(acc > best_acc):
+            best_acc = acc
+            best_raduis = radius
+
+    return best_raduis
+        
     # *** END CODE HERE ***
 
 
