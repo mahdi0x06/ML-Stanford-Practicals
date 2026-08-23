@@ -1,1 +1,1 @@
-# ML-Standfors-Practicals
+# ML-Stanford-Practicals
